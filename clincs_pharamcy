@@ -1,3 +1,4 @@
+
 public function clinicDataCompletednew(Request $request, $id)
 {
     try {
@@ -65,6 +66,7 @@ public function clinicDataCompletednew(Request $request, $id)
         ], 500);
     }
 }
+
 
 
 
