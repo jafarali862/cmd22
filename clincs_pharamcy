@@ -1,0 +1,158 @@
+public function clinicDataCompletednew(Request $request, $id)
+{
+    try {
+        $validator = Validator::make($request->all(), [
+            'delivery_coordinates'  => 'required',
+            'otp'                   => 'required|digits:4',
+            'phone_number'          => 'required|digits_between:10,15',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        // Check if user exists
+        $user = User::where('phone_number', $request->phone_number)->first();
+        if (!$user) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Mobile number not registered.'
+            ], 404);
+        }
+
+        // Find prescription
+        $prescription = ClinicPrescription::find($id);
+        if (!$prescription) {
+            return response()->json([
+                'status' => false,
+                'message' => 'No delivery records found.',
+            ], 404);
+        }
+
+        // ✅ Validate OTP with prescription table
+        if ($prescription->otp !== $request->otp) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Invalid OTP for this delivery.',
+            ], 403);
+        }
+
+        // ✅ OTP matches → update delivery status
+        $prescription->status               = 2;
+        $prescription->delivery_coordinates = $request->delivery_coordinates;
+        $prescription->updated_at           = now();
+        $prescription->save();
+
+        // Reset user OTP details
+        $user->otp = null;
+        $user->otp_ref_id = null;
+        $user->otp_expires_at = null;
+        $user->save();
+
+        // ✅ Success response only after successful update
+        return response()->json([
+            'status' => true,
+            'message' => 'Delivery Completed Successfully.',
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'error' => true,
+            'message' => $e->getMessage(),
+        ], 500);
+    }
+}
+
+
+
+
+
+public function pharmacyDataCompleted(Request $request, $id)
+{
+    try {
+        $validator = Validator::make($request->all(), [
+            'delivered_coordinates' => 'required',
+            'otp'                   => 'required|digits:4',
+            'phone_number'          => 'required|digits_between:10,15',
+            'confirm_payment'       => 'nullable|image', // optional image upload
+            'payment_type'          => 'nullable|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'status' => false,
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        // Check user
+        $user = User::where('phone_number', $request->phone_number)->first();
+        if (!$user) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Mobile number not registered.',
+            ], 404);
+        }
+
+        // Find prescription
+        $prescription = PharmacyPrescription::find($id);
+        if (!$prescription) {
+            return response()->json([
+                'status' => false,
+                'message' => 'No delivery records found.',
+            ], 404);
+        }
+
+        // ✅ Validate OTP against prescription only
+        if ($prescription->otp !== $request->otp) {
+            return response()->json([
+                'status' => false,
+                'message' => 'Invalid OTP for this delivery.',
+            ], 403);
+        }
+
+        // ✅ Handle confirm_payment image upload
+        if ($request->hasFile('confirm_payment')) {
+            $file = $request->file('confirm_payment');
+            $path = $file->store('prescriptions', 'public'); // storage/app/public/prescriptions
+            $prescription->confirm_payment = 'storage/' . $path;
+        }
+
+        // ✅ Update prescription after OTP success
+        $prescription->status               = 4;
+        $prescription->delivery_coordinates = $request->delivered_coordinates;
+        $prescription->payment_type         = $request->payment_type;
+        $prescription->updated_at           = now();
+        $prescription->save();
+
+        // Reset user OTP
+        $user->otp = null;
+        $user->otp_ref_id = null;
+        $user->otp_expires_at = null;
+        $user->save();
+
+        return response()->json([
+            'status' => true,
+            'message' => 'Delivery Completed Successfully.',
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'error' => true,
+            'message' => $e->getMessage(),
+        ], 500);
+    }
+}
+
+
+
+
+
+
+
+
+
+
