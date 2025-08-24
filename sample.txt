@@ -1,0 +1,16 @@
+------------------ Requirements
+Template ID
+1207162304804132282
+
+Template Content
+ {#var#} is the OTP for your {#var#} with Ref ID:{#var#}. Only valid for {#var#} minutes. Do not share the OTP with anyone . Areacode SCB 
+
+Mobile : 9846987724
+
+-------------------------- API 
+URL  GET       
+http://smsgt.niveosys.com/SMS_API/sendsms.php?username=ascbcomed&password=Comed@123&mobile=9846987724&message=23456 is the OTP for your CoMed with Ref ID:4321. Only valid for 5 minutes. Do not share the OTP with anyone . Areacode SCB&sendername=ARDSCB&routetype=1&tid=1207162304804132282
+
+
+------------------------- OUTPUT
+Status:1;Bill:1;Remark:Sent Successfully;GUID: 318213232
